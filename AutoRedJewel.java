@@ -36,8 +36,6 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.teamcode.LiftAndServos;
-
 import org.firstinspires.ftc.robotcontroller.external.samples.ConceptVuforiaNavigation;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -48,7 +46,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
-import org.firstinspires.ftc.robotcore.external.navigation.VuMarkInstanceId;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
@@ -75,8 +72,8 @@ import java.util.Locale;
  * is explained in {@link ConceptVuforiaNavigation}.
  */
 
-@Autonomous(name="!BLUE AUTO-Jewl&Glyph: FEED EM' TO THE FISHES!", group ="Test")
-public class AutoBlueBlockOnly extends LinearOpMode {
+@Autonomous(name="!RED AUTO-Jewel: Jewels! YARRRR!", group ="Test")
+public class AutoRedJewel extends LinearOpMode {
 
     public static final String TAG = "Vuforia VuMark Sample";
 
@@ -152,7 +149,7 @@ public class AutoBlueBlockOnly extends LinearOpMode {
             sleep(600);
             colourServoY.setPosition(0.66);
             sleep(600);
-            colourServoY.setPosition(1);
+            colourServoY.setPosition(0.8);
             sleep(600);
             double avgColor = 0.0;
             for(int i = 0; i < 5; i++) {
@@ -174,18 +171,24 @@ public class AutoBlueBlockOnly extends LinearOpMode {
 
             if((250 > avgColor && avgColor > 120))
             {
-                colourServoX.setPosition(1);
-                sleep(500);
-                colourServoY.setPosition(0.5);
-                sleep(400);
-                colourServoX.setPosition(0.5);
+                telemetry.addData("Hue", hsvValues[0]);
+                telemetry.addData("Avg Hue", avgColor + "blu");
+                telemetry.update();
+                LAS.swordX(-1);
+                sleep(700);
+                LAS.swordX(0);
                 sleep(500);
             }
             else if((0 <= avgColor && avgColor <=  30))
             {
-                colourServoX.setPosition(0);
+                telemetry.addData("Hue", hsvValues[0]);
+                telemetry.addData("Avg Hue", avgColor + "red");
+                telemetry.update();
+                LAS.swordX(1);
                 sleep(500);
-                colourServoX.setPosition(0.5);
+                colourServoY.setPosition(0.5);
+                sleep(400);
+                LAS.swordX(0.3);
                 sleep(500);
             }
             drive.tankDrive(0,0);
@@ -194,148 +197,17 @@ public class AutoBlueBlockOnly extends LinearOpMode {
             colourServoY.setPosition(0);
             sleep(1000);
 
-            LAS.setServos(0.2);
-            sleep(2000);
-            LAS.lift(0.5);
-            sleep(300);
-            LAS.lift(0);
-            drive.mecMove(0,0.5,0);
-            sleep(1500);
+            requestOpModeStop();
 
-            drive.mecMove(270,0.4,0);
-            sleep(500);
-            drive.mecMove(0,0,0);
-            sleep(300);
-            RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
-            int timePassed = 0;
-            telemetry.addData("Relic ", vuMark.toString());
-            telemetry.update();
-            while(vuMark == RelicRecoveryVuMark.UNKNOWN)
-            {
-                if(timePassed >= 5000) {
-                    break;
-                }
-                drive.mecMove(270,0.35,0);
-                sleep(200);
-                timePassed += 200;
-                drive.mecMove(0,0,0);
-                sleep(150);
-                timePassed += 300;
-                vuMark = RelicRecoveryVuMark.from(relicTemplate);
-                telemetry.addData("Relic ", vuMark.toString());
-                telemetry.update();
-                sleep(150);
-                vuMark = RelicRecoveryVuMark.from(relicTemplate);
-                telemetry.addData("Relic ", vuMark.toString());
-                telemetry.update();
-            }
-            drive.mecMove(0,0,0);
-            telemetry.addData("Relic ", vuMark.toString());
-            telemetry.update();
-            sleep(1000);
-            if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
-
-                pictograph = vuMark.toString();
-                telemetry.addData("VuMark", "%s visible", vuMark);
-                OpenGLMatrix pose = ((VuforiaTrackableDefaultListener)relicTemplate.getListener()).getPose();
-                telemetry.addData("Pose", format(pose));
-
-                if (pose != null) {
-                    VectorF trans = pose.getTranslation();
-                    Orientation rot = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-
-                    // Extract the X, Y, and Z components of the offset of the target relative to the robot
-                    double tX = trans.get(0);
-                    double tY = trans.get(1);//Angle the robot is at to the pic
-                    double tZ = trans.get(2);
-
-                    // Extract the rotational components of the target relative to the robot
-                    double rX = rot.firstAngle;
-                    double rY = rot.secondAngle;
-                    double rZ = rot.thirdAngle;
-
-                /*while((rY < -2 || rY > 2)) {
-                    if (rY > 0) {
-                        drive.tankDrive(0.1,-0.1);
-                    }
-                    else if (rY <= 0) {
-                        drive.tankDrive(-0.1,0.1);
-                    }
-                    pose = ((VuforiaTrackableDefaultListener)relicTemplate.getListener()).getPose();
-                    trans = pose.getTranslation();
-                    rot = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-                    rY = rot.secondAngle;
-                    }*/
-                    drive.mecMove(0,0,0);
-                    sleep(500);
-                    while((tZ < -850)) {
-                        pose = ((VuforiaTrackableDefaultListener)relicTemplate.getListener()).getPose();
-                        trans = pose.getTranslation();
-                        rot = Orientation.getOrientation(pose, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-                        // Extract the X, Y, and Z components of the offset of the target relative to the robot
-                        tX = trans.get(0);
-                        tY = trans.get(1);//Angle the robot is at to the pic
-                        tZ = trans.get(2);//Distance
-                        // Extract the rotational components of the target relative to the robot
-                        rX = rot.firstAngle;
-                        rY = rot.secondAngle;
-                        rZ = rot.thirdAngle;//Distance from
-                        drive.mecMove(180,0.3,0);
-                    }
-                    drive.mecMove(0,0,0);
-                    sleep(500);
-
-                    drive.mecMove(90,0.5,0);
-                    sleep(2300);
-
-                    drive.mecMove(0,0,0.85);
-                    sleep(470);
-
-                    drive.mecMove(0,0,0);
-                    sleep(500);
-
-                    if(pictograph.equals("LEFT"))
-                    {
-                        drive.mecMove(90, 0.5, 0);
-                        sleep(1450);
-                    }
-                    else if(pictograph.equals("CENTER"))
-                    {
-                        drive.mecMove(90, 0.5, 0);
-                        sleep(1000);
-                    }
-                    else if(pictograph.equals("RIGHT"))
-                    {
-                        drive.mecMove(90, 0.5, 0);
-                        sleep(300);
-                    }
-                    drive.tankDrive(0,0);
-                    sleep(500);
-                    drive.mecMove(0, 0.5, 0);
-                    sleep(1000);
-                    drive.tankDrive(0,0);
-                    LAS.setServos(0.5);
-                    sleep(500);
-                    drive.mecMove(180,0.4,0);
-                    sleep(500);
-                    drive.mecMove(0, 0.4, 0);
-                    sleep(600);
-                    drive.mecMove(180, 0.5, 0);
-                    sleep(500);
-                    drive.mecMove(0,0,0);
-                    requestOpModeStop();
-                }
             }
             else {
                 telemetry.addData("VuMark", "not visible");
                 drive.tankDrive(0,0);
                 requestOpModeStop();
             }
-
             telemetry.update();
-
         }
-    }
+
 
     String format(OpenGLMatrix transformationMatrix) {
         return (transformationMatrix != null) ? transformationMatrix.formatAsTransform() : "null";
